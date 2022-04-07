@@ -1,0 +1,36 @@
+{
+  "name": "aurora-orm",
+  "version": "0.1.0",
+  "description": "Lightweight ORM for Aurora Data API",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BillyClifton/aurora-orm.git"
+  },
+  "keywords": [
+    "aurora",
+    "orm"
+  ],
+  "author": "Billy Clifton",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BillyClifton/aurora-orm/issues"
+  },
+  "homepage": "https://github.com/BillyClifton/aurora-orm#readme",
+  "devDependencies": {
+    "husky": "^7.0.4",
+    "jest": "^27.5.1",
+    "lint-staged": "^12.3.7",
+    "prettier": "2.6.2"
+  },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1109.0"
+  }
+}
