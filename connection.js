@@ -15,6 +15,7 @@ module.exports = function (config) {
           response = await data_service.executeStatement(request).promise();
           return response;
         }
+        //prepare params
         if (!Array.isArray(args)) {
           args = [args];
         }
@@ -83,9 +84,6 @@ module.exports = function (config) {
             .batchExecuteStatement(request)
             .promise();
         }
-        // console.debug(request)
-        // console.debug(JSON.stringify(response));
-
         //format response
         let records =
           response.records ||

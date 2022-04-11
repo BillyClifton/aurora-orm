@@ -3,11 +3,11 @@ require("dotenv").config();
 async function MockCallback(table, sql, params) {
   return Promise.resolve(sql);
 }
-let expenses = require("../index")(
+const expenses = require("../model")(
   require("./tables/expense.js"),
   MockCallback
 );
-let users = require("../index")(require("./tables/user.js"), MockCallback);
+let users = require("../model")(require("./tables/user.js"), MockCallback);
 test("SELECT", () => {
   expect(expenses.get({ where: { merchant: "Test Merch" } })).resolves.toEqual(
     "SELECT * FROM expenses WHERE merchant = :1 OFFSET 0 LIMIT 30"

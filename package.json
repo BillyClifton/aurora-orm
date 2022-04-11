@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/BillyClifton/aurora-orm#readme",
   "devDependencies": {
+    "dotenv": "^16.0.0",
     "husky": "^7.0.4",
     "jest": "^27.5.1",
     "lint-staged": "^12.3.7",

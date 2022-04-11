@@ -8,12 +8,7 @@ module.exports = {
       primary_key: true,
     },
     {
-      name: "company_uuid",
-      type: "uuid",
-      not_null: true,
-    },
-    {
-      name: "company_user_uuid",
+      name: "user_uuid",
       type: "uuid",
     },
     {
