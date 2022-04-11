@@ -1,5 +1,53 @@
 "use strict";
 module.exports = function (table, callback) {
+  function buildWhere(where) {
+    let sql = "";
+    let params = {};
+    let x = 0;
+    if (Object.keys(where).length) {
+      sql += ` WHERE ${Object.keys(where)
+        .map((key) => {
+          x++;
+          if (Array.isArray(where[key])) {
+            return `${key} IN (:${where[key]
+              .map((entry) => {
+                params[x.toString()] = {
+                  type: table.columns.find((column) => column.name == key).type,
+                  value: entry,
+                };
+                return x++;
+              })
+              .join(",:")})`;
+          } else {
+            let field = key.replace(/^.*~/, "");
+            params[x.toString()] = {
+              type: table.columns.find((column) => column.name == field).type,
+              value: where[key],
+            };
+            if (key.startsWith("lt~")) {
+              return `${field} < :${x}`;
+            }
+            if (key.startsWith("gt~")) {
+              return `${field} > :${x}`;
+            }
+            if (key.startsWith("lte~")) {
+              return `${field} <= :${x}`;
+            }
+            if (key.startsWith("gte~")) {
+              return `${field} >= :${x}`;
+            }
+            if (key.startsWith("like~")) {
+              params[x.toString()].value = `%${params[x.toString()].value}%`;
+              return `${field} ILIKE :${x}`;
+            }
+            return `${field} = :${x}`;
+          }
+        })
+        .join(" AND ")}`;
+    }
+    return [sql, params];
+  }
+
   return {
     get: async ({
       fields = ["*"],
@@ -14,32 +62,9 @@ module.exports = function (table, callback) {
           sql += ` INNER JOIN ${include.table} on ${table.name}.uuid = ${include.table}.${include.fk_field}`;
         }
         let x = 0;
-        let params = {};
-        if (Object.keys(where).length) {
-          sql += ` WHERE ${Object.keys(where)
-            .map((key) => {
-              x++;
-              if (Array.isArray(where[key])) {
-                return `${key} IN (:${where[key]
-                  .map((entry) => {
-                    params[x.toString()] = {
-                      type: table.columns.find((column) => column.name == key)
-                        .type,
-                      value: entry,
-                    };
-                    return x++;
-                  })
-                  .join(",:")})`;
-              } else {
-                params[x] = {
-                  type: table.columns.find((column) => column.name == key).type,
-                  value: where[key],
-                };
-                return `${key} = :${x}`;
-              }
-            })
-            .join(" AND ")}`;
-        }
+        // let params = {};
+        let [where_sql, params] = buildWhere(where);
+        sql += where_sql;
         let join = "";
         if (include) {
           join = ` INNER JOIN ${include.table} on ${table.name}.uuid = ${include.table}.${include.fk_field}`;
@@ -58,12 +83,9 @@ module.exports = function (table, callback) {
         if (include) {
           sql += ` INNER JOIN ${include.table} on ${table.name}.uuid = ${include.table}.${include.fk_field}`;
         }
-        if (Object.keys(where).length) {
-          sql += ` WHERE ${Object.keys(where)
-            .map((key) => `${key} = :${key}`)
-            .join(" AND ")}`;
-        }
-        let results = await callback(table, sql, where);
+        let [where_sql, params] = buildWhere(where);
+        sql += where_sql;
+        let results = await callback(table, sql, params);
         return results;
       } catch (error) {
         return error;

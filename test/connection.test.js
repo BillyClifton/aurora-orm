@@ -18,10 +18,3 @@ test("DB Driver: Select ", async () => {
   expect(result.records).toBeTruthy();
   expect(result.numberOfRecordsUpdated).toEqual(0);
 });
-// {
-//   secretArn: 'arn:aws:secretsmanager:us-east-1:434025528698:secret:/api/rds-data-api/DBCredentials-QvXKWv',
-//   resourceArn: 'arn:aws:rds:us-east-1:434025528698:cluster:rds-data-api-serverlessdb-dmr65w00udz0',
-//   database: 'postgres',
-//   sql: "SELECT * FROM expenses WHERE merchant IN :merchant OFFSET 0 LIMIT 30",
-//   parameters:[{"name":"merchant","value":{"stringValue":"Test Merch"}}]
-// }

@@ -12,6 +12,11 @@ test("SELECT", () => {
   expect(expenses.get({ where: { merchant: "Test Merch" } })).resolves.toEqual(
     "SELECT * FROM expenses WHERE merchant = :1 OFFSET 0 LIMIT 30"
   );
+  expect(
+    expenses.get({ where: { merchant: "Test Merch", "lt~amount": 40 } })
+  ).resolves.toEqual(
+    "SELECT * FROM expenses WHERE merchant = :1 AND amount < :2 OFFSET 0 LIMIT 30"
+  );
 });
 test("SELECT from array", () => {
   expect(
@@ -24,9 +29,7 @@ test("SELECT from array", () => {
 test("Get Total", () => {
   expect(
     expenses.getTotal({ where: { merchant: "Test Merch" } })
-  ).resolves.toEqual(
-    "SELECT COUNT(*) FROM expenses WHERE merchant = :merchant"
-  );
+  ).resolves.toEqual("SELECT COUNT(*) FROM expenses WHERE merchant = :1");
 });
 
 test("Create", () => {
