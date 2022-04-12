@@ -10,6 +10,12 @@ module.exports = {
     {
       name: "user_uuid",
       type: "uuid",
+      reference: {
+        table: "users",
+        field: "uuid",
+        on_update: "CASCADE",
+        on_delete: "CASCADE",
+      },
     },
     {
       name: "date",

@@ -1,6 +1,6 @@
 "use strict";
 require("dotenv").config();
-async function MockCallback(table, sql, params) {
+async function MockCallback(sql, table, params) {
   return Promise.resolve(sql);
 }
 const expenses = require("../model")(
@@ -16,6 +16,21 @@ test("SELECT", () => {
     expenses.get({ where: { merchant: "Test Merch", "lt~amount": 40 } })
   ).resolves.toEqual(
     "SELECT * FROM expenses WHERE merchant = :1 AND amount < :2 OFFSET 0 LIMIT 30"
+  );
+  expect(
+    expenses.get({ where: { merchant: ["Test Merch"], type: ["personal"] } })
+  ).resolves.toEqual(
+    "SELECT * FROM expenses WHERE merchant = :1 AND type = :2 OFFSET 0 LIMIT 30"
+  );
+  expect(
+    expenses.get({
+      where: {
+        merchant: ["Test Merch", "Home Shop"],
+        type: ["personal", "business"],
+      },
+    })
+  ).resolves.toEqual(
+    "SELECT * FROM expenses WHERE merchant IN (:1,:2) AND type IN (:3,:4) OFFSET 0 LIMIT 30"
   );
 });
 test("SELECT from array", () => {
@@ -52,4 +67,35 @@ test("Delete", () => {
   expect(users.destroy({ email: "test@email.com" })).resolves.toEqual(
     "DELETE FROM users WHERE email = :email RETURNING *"
   );
+});
+
+test("Create Table", () => {
+  expect(expenses.createTable()).resolves.toEqual(
+    "CREATE TABLE expenses (uuid uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_uuid uuid, date date, amount decimal(12,2), merchant text, type text, description text, status text DEFAULT 'draft', note text, created_at timestamptz DEFAULT CURRENT_TIMESTAMP, updated_at timestamptz DEFAULT CURRENT_TIMESTAMP);"
+  );
+});
+
+test("Create Indexes", () => {
+  expect(expenses.createIndexes()).resolves.toEqual([
+    "CREATE INDEX expenses_company_uuid_index ON expenses (company_uuid)",
+    "CREATE INDEX expenses_company_user_uuid_index ON expenses (company_user_uuid)",
+  ]);
+});
+
+test("Create Associations", () => {
+  expect(expenses.createAssociations()).resolves.toEqual([
+    "ALTER TABLE expenses ADD CONSTRAINT expenses_user_uuid_fk FOREIGN KEY user_uuid REFERENCES users(uuid) ON UPDATE CASCADE ON DELETE CASCADE",
+  ]);
+});
+
+test("Create Trigger", () => {
+  expect(expenses.createTriggers()).resolves.toEqual([
+    "CREATE TRIGGER expense_updated BEFORE UPDATE ON expense FOR EACH ROW EXECUTE PROCEDURE update_timestamp()",
+  ]);
+});
+test("Provision", () => {
+  expect(expenses.provision()).resolves.toEqual([
+    "CREATE EXTENSION IF NOT EXISTS pgcrypto",
+    "CREATE OR REPLACE FUNCTION update_timestamp() RETURNS TRIGGER as $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END $$ LANGUAGE PLPGSQL;",
+  ]);
 });

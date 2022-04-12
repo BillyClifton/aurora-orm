@@ -61,11 +61,12 @@ Lightweight ORM for Aurora Data API
       email: "Billy@email.com"
     }
   });
-// [
-//   {
-//     uuid: '8066a2d9-155e-4b5f-8d4b-51b194eba86d',
-//     email: "Billy@email.com",
-//     ...
-//   }
-// ]
+//[
+//    {
+//      uuid: '8066a2d9-155e-4b5f-8d4b-51b194eba86d',
+//      email: "Billy@email.com",
+//      ...
+//    }
+//]
+
 ```

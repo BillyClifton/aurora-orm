@@ -3,44 +3,47 @@ module.exports = function (table, callback) {
   function buildWhere(where) {
     let sql = "";
     let params = {};
-    let x = 0;
+    let x = 1;
     if (Object.keys(where).length) {
       sql += ` WHERE ${Object.keys(where)
         .map((key) => {
-          x++;
+          let field = key.replace(/^.*~/, "");
+          if (Array.isArray(where[key]) && where[key].length == 1) {
+            where[key] = where[key][0];
+          }
           if (Array.isArray(where[key])) {
             return `${key} IN (:${where[key]
               .map((entry) => {
                 params[x.toString()] = {
-                  type: table.columns.find((column) => column.name == key).type,
+                  type: table.columns.find((column) => column.name == field)
+                    .type,
                   value: entry,
                 };
                 return x++;
               })
               .join(",:")})`;
           } else {
-            let field = key.replace(/^.*~/, "");
             params[x.toString()] = {
               type: table.columns.find((column) => column.name == field).type,
               value: where[key],
             };
             if (key.startsWith("lt~")) {
-              return `${field} < :${x}`;
+              return `${field} < :${x++}`;
             }
             if (key.startsWith("gt~")) {
-              return `${field} > :${x}`;
+              return `${field} > :${x++}`;
             }
             if (key.startsWith("lte~")) {
-              return `${field} <= :${x}`;
+              return `${field} <= :${x++}`;
             }
             if (key.startsWith("gte~")) {
-              return `${field} >= :${x}`;
+              return `${field} >= :${x++}`;
             }
             if (key.startsWith("like~")) {
               params[x.toString()].value = `%${params[x.toString()].value}%`;
-              return `${field} ILIKE :${x}`;
+              return `${field} ILIKE :${x++}`;
             }
-            return `${field} = :${x}`;
+            return `${field} = :${x++}`;
           }
         })
         .join(" AND ")}`;
@@ -70,10 +73,9 @@ module.exports = function (table, callback) {
           join = ` INNER JOIN ${include.table} on ${table.name}.uuid = ${include.table}.${include.fk_field}`;
         }
         sql += ` OFFSET ${offset} LIMIT ${limit}`;
-        let results = await callback(table, sql, params);
+        let results = await callback(sql, table, params);
         return results;
       } catch (error) {
-        console.log(error);
         return error;
       }
     },
@@ -85,7 +87,7 @@ module.exports = function (table, callback) {
         }
         let [where_sql, params] = buildWhere(where);
         sql += where_sql;
-        let results = await callback(table, sql, params);
+        let results = await callback(sql, table, params);
         return results;
       } catch (error) {
         return error;
@@ -101,7 +103,7 @@ module.exports = function (table, callback) {
           ", "
         )}) VALUES (:${fields.join(", :")}) RETURNING *;`;
         // return sql;
-        return await callback(table, sql, records);
+        return await callback(sql, table, records);
         // return results;
       } catch (error) {
         return error;
@@ -121,7 +123,7 @@ module.exports = function (table, callback) {
         for (const [key, value] of Object.entries(where)) {
           data[`where_${key}`] = value;
         }
-        let response = await callback(table, sql, data);
+        let response = await callback(sql, table, data);
         return response;
       } catch (error) {
         return error;
@@ -129,13 +131,11 @@ module.exports = function (table, callback) {
     },
     destroy: async (where) => {
       try {
-        // console.log(params);
-        // let where = params.where;
         let sql = `DELETE FROM ${table.name}`;
         sql += ` WHERE ${Object.keys(where)
           .map((key) => `${key} = :${key}`)
           .join(" AND ")} RETURNING *`;
-        let response = await callback(table, sql, where);
+        let response = await callback(sql, table, where);
         console.Console;
         return response;
       } catch (error) {
@@ -144,7 +144,7 @@ module.exports = function (table, callback) {
     },
     createTable: async () => {
       try {
-        let sql = `CREATE TABLE ${table.name}`;
+        let sql = `CREATE TABLE IF NOT EXISTS ${table.name}`;
         let columns = table.columns.map((column) => {
           let statement = `${column.name} ${column.type}`;
           statement += column.primary_key ? ` PRIMARY KEY` : "";
@@ -155,33 +155,25 @@ module.exports = function (table, callback) {
           return statement;
         });
         sql += ` (${columns.join(", ")});`;
-        return await callback(table, sql);
-        // if(callback){
-        //   console.log("Calling callback");
-        //   return await callback(sql);
-        // }
-        // return sql;
+        return await callback(sql, table);
       } catch (error) {
-        console.log("er");
         return error;
       }
     },
     createIndexes: async () => {
       let statements = table.indexes.map(async (index) => {
         if (typeof index == "string") {
-          console.log("index is string");
           index = { name: index, fields: [index] };
         }
-        console.log(index);
         let sql = `CREATE`;
         sql += index.unique ? ` UNIQUE INDEX` : " INDEX";
         sql += index.name
           ? ` ${table.name}_${index.name}_index`
           : ` ${table.name}_${index.fields.join("_")}_index`;
         sql += ` ON ${table.name} (${index.fields.join(", ")})`;
-        return sql;
+        return callback(sql, table);
       });
-      return statements;
+      return await Promise.all(statements);
     },
     createAssociations: async () => {
       let statements = table.columns
@@ -197,20 +189,16 @@ module.exports = function (table, callback) {
           statement += column.reference.on_delete
             ? ` ON DELETE ${column.reference.on_delete}`
             : "";
-          console.log(statement);
-          let results = await database.callback(table, statement);
-          console.log(results);
-          return statement;
+          return callback(statement, table);
         });
-      return statements;
+      return await Promise.all(statements);
     },
-    createTrigger: async () => {
-      let sql_statements = [];
-      table.triggers.forEach(async (trigger) => {
-        let sql = `CREATE TRIGGER ${trigger.name} BEFORE UPDATE ON ${trigger.resource} FOR EACH ROW EXECUTE PROCEDURE ${trigger.procedure};`;
-        sql_statements.push(sql);
+    createTriggers: async () => {
+      let statments = table.triggers.map(async (trigger) => {
+        let sql = `CREATE TRIGGER ${trigger.name} BEFORE UPDATE ON ${trigger.resource} FOR EACH ROW EXECUTE PROCEDURE ${trigger.procedure}`;
+        return callback(sql, table);
       });
-      return sql_statements;
+      return await Promise.all(statments);
     },
     dropTable: async () => {
       let sql = `DROP TABLE IF EXISTS ${table.name} CASCADE`;
@@ -232,7 +220,12 @@ module.exports = function (table, callback) {
       return sql;
     },
     provision: async () => {
-      return "CREATE EXTENSION pgcrypto;";
+      return await Promise.all([
+        callback("CREATE EXTENSION IF NOT EXISTS pgcrypto"),
+        callback(
+          "CREATE OR REPLACE FUNCTION update_timestamp() RETURNS TRIGGER as $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END $$ LANGUAGE PLPGSQL;"
+        ),
+      ]);
     },
   };
 };

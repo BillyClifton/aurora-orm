@@ -7,6 +7,7 @@ const DB = require("../index.js")({
   resourceArn: process.env.DB_HOST,
   database: process.env.DB_NAME,
 });
+
 test("Get", async () => {
   let expenses = DB.Model(require("./tables/expense.js"));
   let response = await expenses.get({ where: { merchant: "Test Merch" } });
@@ -18,4 +19,17 @@ test("Get Batch", async () => {
     where: { merchant: ["Test Merch", "another"] },
   });
   expect(response.data).toBeTruthy();
+});
+
+test("Create Table", async () => {
+  let users = DB.Model(require("./test/tables/user.js"));
+  expect(users.createTable()).resolves.toEqual({
+    generatedFields: [],
+    numberOfRecordsUpdated: 0,
+  });
+  let expenses = DB.Model(require("./test/tables/expense.js"));
+  expect(expenses.createTable()).resolves.toEqual({
+    generatedFields: [],
+    numberOfRecordsUpdated: 0,
+  });
 });

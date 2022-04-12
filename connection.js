@@ -3,7 +3,7 @@ module.exports = function (config) {
   const AWS = require("aws-sdk");
   AWS.config.update({ region: process.env.AWS_REGION || "us-east-1" });
   return {
-    query: async (table, sql, args) => {
+    query: async (sql, table, args) => {
       try {
         const data_service = new AWS.RDSDataService();
         let response;
@@ -11,7 +11,7 @@ module.exports = function (config) {
           sql: sql,
           ...config,
         };
-        if (!args) {
+        if (!table || !args) {
           response = await data_service.executeStatement(request).promise();
           return response;
         }
@@ -111,6 +111,24 @@ module.exports = function (config) {
         console.error(error);
         return error;
       }
+    },
+    provision: async () => {
+      const data_service = new AWS.RDSDataService();
+      let responses = [
+        data_service
+          .executeStatement({
+            sql: "CREATE EXTENSION IF NOT EXISTS pgcrypto",
+            ...config,
+          })
+          .promise(),
+        data_service
+          .executeStatement({
+            sql: "CREATE OR REPLACE FUNCTION update_timestamp() RETURNS TRIGGER as $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END $$ LANGUAGE PLPGSQL;",
+            ...config,
+          })
+          .promise(),
+      ];
+      return await Promise.all(responses);
     },
   };
 };
