@@ -60,18 +60,22 @@ module.exports = function (table, callback) {
       include,
     }) => {
       try {
+        // let valid_fields = table.collums.map(collum=>collumn.name)
+        // fields = sanatize(fields);
+        // if(fields == ["*"] || !fields.every(field => valid_fields.includes(field) || "*")){
+        //   throw Error(`Invalid projection fields.`);
+        // }
+        // if(!Object.keys(where).every(field => valid_fields.includes(field.replace(/^.*~/, "")) || "*")){
+        //   throw Error(`Invalid condition fields.`);
+        // }
         let sql = `SELECT ${fields.join(", ")} FROM ${table.name}`;
         if (include) {
-          sql += ` INNER JOIN ${include.table} on ${table.name}.uuid = ${include.table}.${include.fk_field}`;
+          sql += ` INNER JOIN ${include.table} on ${table.name}.${include.fk_field} = ${include.table}.uuid`;
         }
         let x = 0;
         // let params = {};
         let [where_sql, params] = buildWhere(where);
         sql += where_sql;
-        let join = "";
-        if (include) {
-          join = ` INNER JOIN ${include.table} on ${table.name}.uuid = ${include.table}.${include.fk_field}`;
-        }
         sql += ` OFFSET ${offset} LIMIT ${limit}`;
         let results = await callback(sql, table, params);
         return results;
@@ -83,7 +87,7 @@ module.exports = function (table, callback) {
       try {
         let sql = `SELECT COUNT(*) FROM ${table.name}`;
         if (include) {
-          sql += ` INNER JOIN ${include.table} on ${table.name}.uuid = ${include.table}.${include.fk_field}`;
+          sql += ` INNER JOIN ${include.table} on ${table.name}.${include.fk_field} = ${include.table}.uuid`;
         }
         let [where_sql, params] = buildWhere(where);
         sql += where_sql;

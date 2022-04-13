@@ -41,6 +41,22 @@ test("SELECT from array", () => {
   );
 });
 
+test("Select from join", () => {
+  expect(
+    expenses.get({
+      where: {
+        merchant: ["Test Merch", "merchB"],
+      },
+      include: {
+        table: "users",
+        fk_field: "user_uuid",
+      },
+    })
+  ).resolves.toEqual(
+    "SELECT * FROM expenses INNER JOIN users on expenses.user_uuid = users.uuid WHERE merchant IN (:1,:2) OFFSET 0 LIMIT 30"
+  );
+});
+
 test("Get Total", () => {
   expect(
     expenses.getTotal({ where: { merchant: "Test Merch" } })
