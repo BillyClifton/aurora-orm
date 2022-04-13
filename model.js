@@ -70,7 +70,11 @@ module.exports = function (table, callback) {
         // }
         let sql = `SELECT ${fields.join(", ")} FROM ${table.name}`;
         if (include) {
-          sql += ` INNER JOIN ${include.table} on ${table.name}.${include.fk_field} = ${include.table}.uuid`;
+          if (table.columns.find((column) => column.name == include.fk_field)) {
+            sql += ` INNER JOIN ${include.table} on ${table.name}.${include.fk_field} = ${include.table}.uuid`;
+          } else {
+            sql += ` INNER JOIN ${include.table} on ${include.table}.${include.fk_field} = ${table.name}.uuid`;
+          }
         }
         let x = 0;
         // let params = {};
@@ -87,7 +91,11 @@ module.exports = function (table, callback) {
       try {
         let sql = `SELECT COUNT(*) FROM ${table.name}`;
         if (include) {
-          sql += ` INNER JOIN ${include.table} on ${table.name}.${include.fk_field} = ${include.table}.uuid`;
+          if (table.columns.find((column) => column.name == include.fk_field)) {
+            sql += ` INNER JOIN ${include.table} on ${table.name}.${include.fk_field} = ${include.table}.uuid`;
+          } else {
+            sql += ` INNER JOIN ${include.table} on ${include.table}.${include.fk_field} = ${table.name}.uuid`;
+          }
         }
         let [where_sql, params] = buildWhere(where);
         sql += where_sql;
@@ -107,7 +115,15 @@ module.exports = function (table, callback) {
           ", "
         )}) VALUES (:${fields.join(", :")}) RETURNING *;`;
         // return sql;
-        return await callback(sql, table, records);
+        let params = records.map((record) => {
+          return Object.keys(record).map((key) => {
+            return {
+              type: table.columns.find((column) => column.name == key).type,
+              value: record[key],
+            };
+          });
+        });
+        return await callback(sql, table, params);
         // return results;
       } catch (error) {
         return error;

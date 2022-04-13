@@ -1,5 +1,5 @@
 module.exports = {
-  name: "users",
+  name: "receipts",
   columns: [
     {
       name: "uuid",
@@ -8,20 +8,17 @@ module.exports = {
       primary_key: true,
     },
     {
-      name: "email",
-      type: "text",
-      unique: true,
+      name: "expense_uuid",
+      type: "uuid",
+      reference: {
+        table: "expenses",
+        field: "uuid",
+        on_update: "CASCADE",
+        on_delete: "CASCADE",
+      },
     },
     {
-      name: "password",
-      type: "text",
-    },
-    {
-      name: "first_name",
-      type: "text",
-    },
-    {
-      name: "last_name",
+      name: "source_url",
       type: "text",
     },
     {
@@ -37,8 +34,8 @@ module.exports = {
   ],
   triggers: [
     {
-      name: "user_updated",
-      resource: "users",
+      name: "receipt_updated",
+      resource: "receipts",
       procedure: "update_timestamp()",
     },
   ],

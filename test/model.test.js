@@ -55,6 +55,19 @@ test("Select from join", () => {
   ).resolves.toEqual(
     "SELECT * FROM expenses INNER JOIN users on expenses.user_uuid = users.uuid WHERE merchant IN (:1,:2) OFFSET 0 LIMIT 30"
   );
+  expect(
+    expenses.get({
+      where: {
+        merchant: ["Test Merch", "merchB"],
+      },
+      include: {
+        table: "receipts",
+        fk_field: "expense_uuid",
+      },
+    })
+  ).resolves.toEqual(
+    "SELECT * FROM expenses INNER JOIN receipts on receipts.expense_uuid = expenses.uuid WHERE merchant IN (:1,:2) OFFSET 0 LIMIT 30"
+  );
 });
 
 test("Get Total", () => {
@@ -64,6 +77,7 @@ test("Get Total", () => {
 });
 
 test("Create", () => {
+  // console.log(expenses.create({ merchant: "Test Merch", amount: 30.12 }));
   expect(
     expenses.create({ merchant: "Test Merch", amount: 30.12 })
   ).resolves.toEqual(
