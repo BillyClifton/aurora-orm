@@ -22,12 +22,12 @@ test("Get Batch", async () => {
 });
 
 test("Create Table", async () => {
-  let users = DB.Model(require("./test/tables/user.js"));
+  let users = DB.Model(require("./tables/user.js"));
   expect(users.createTable()).resolves.toEqual({
     generatedFields: [],
     numberOfRecordsUpdated: 0,
   });
-  let expenses = DB.Model(require("./test/tables/expense.js"));
+  let expenses = DB.Model(require("./tables/expense.js"));
   expect(expenses.createTable()).resolves.toEqual({
     generatedFields: [],
     numberOfRecordsUpdated: 0,

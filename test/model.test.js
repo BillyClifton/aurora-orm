@@ -71,7 +71,7 @@ test("Delete", () => {
 
 test("Create Table", () => {
   expect(expenses.createTable()).resolves.toEqual(
-    "CREATE TABLE expenses (uuid uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_uuid uuid, date date, amount decimal(12,2), merchant text, type text, description text, status text DEFAULT 'draft', note text, created_at timestamptz DEFAULT CURRENT_TIMESTAMP, updated_at timestamptz DEFAULT CURRENT_TIMESTAMP);"
+    "CREATE TABLE IF NOT EXISTS expenses (uuid uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_uuid uuid, date date, amount decimal(12,2), merchant text, type text, description text, status text DEFAULT 'draft', note text, created_at timestamptz DEFAULT CURRENT_TIMESTAMP, updated_at timestamptz DEFAULT CURRENT_TIMESTAMP);"
   );
 });
 
