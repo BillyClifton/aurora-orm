@@ -22,59 +22,62 @@ module.exports = function (config) {
         let params = args.map((arg) => {
           return Object.keys(arg).map((key) => {
             let param = {
-              name: key,
+              name: arg[key].name || key,
+              value: arg[key].name || arg[key],
             };
-            if (arg[key].value == null) {
+            if (param.value == null) {
               param.isNull = true;
               return param;
             }
+            let type = table.columns.find(
+              (column) => column.name == param.name
+            ).type;
             //typeHint: JSON | UUID | TIMESTAMP | DATE | TIME | DECIMAL,
-            if (arg[key].type.startsWith("decimal")) {
+            if (type.startsWith("decimal")) {
               param.typeHint = "DECIMAL";
-              param.value = { doubleValue: arg[key].value };
-              return value;
+              param.value = { doubleValue: param.value };
+              return param;
             }
-            switch (arg[key].type) {
+            switch (type) {
               case "text":
-                param.value = { stringValue: arg[key].value };
+                param.value = { stringValue: param.value };
                 break;
               case "uuid":
                 param.typeHint = "UUID";
-                param.value = { stringValue: arg[key].value };
+                param.value = { stringValue: param.value };
                 break;
               case "json":
                 param.typeHint = "JSON";
-                param.value = { stringValue: arg[key].value };
+                param.value = { stringValue: param.value };
                 break;
               case "timestamptz":
                 param.typeHint = "TIMESTAMP";
-                param.value = { stringValue: arg[key].value };
+                param.value = { stringValue: param.value };
                 break;
               case "date":
                 param.typeHint = "DATE";
-                param.value = { stringValue: arg[key].value };
+                param.value = { stringValue: param.value };
                 break;
               case "time":
                 param.typeHint = "TIME";
-                param.value = { stringValue: arg[key].value };
+                param.value = { stringValue: param.value };
                 break;
               case "decimal":
                 param.typeHint = "DECIMAL";
-                param.value = { doubleValue: arg[key].value };
+                param.value = { doubleValue: param.value };
                 break;
               case "boolean":
-                param.value = { booleanValue: arg[key].value };
+                param.value = { booleanValue: param.value };
                 break;
               case "bigint":
               case "integer":
               case "int":
-                param.value = { longValue: arg[key].value };
+                param.value = { longValue: param.value };
                 break;
             }
             return param;
           });
         });
-
         if ((params.length = 1)) {
           request.parameters = params[0];
           response = await data_service.executeStatement(request).promise();

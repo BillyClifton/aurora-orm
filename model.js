@@ -108,22 +108,27 @@ module.exports = function (table, callback) {
     create: async (records) => {
       try {
         let fields = Object.keys(Array.isArray(records) ? records[0] : records);
-        if (!Array.isArray(records)) {
-          records = [records];
-        }
+        // if (!Array.isArray(records)) {
+        //   records = [records];
+        // }
         let sql = `INSERT INTO ${table.name} (${fields.join(
           ", "
         )}) VALUES (:${fields.join(", :")}) RETURNING *;`;
         // return sql;
-        let params = records.map((record) => {
-          return Object.keys(record).map((key) => {
-            return {
-              type: table.columns.find((column) => column.name == key).type,
-              value: record[key],
-            };
-          });
-        });
-        return await callback(sql, table, params);
+        // console.log(records);
+        // console.log('====+');
+        // records.forEach((record)=>{
+        //   console.log(record);
+        // });
+        // let params = records.map((record) => {
+        //   return Object.keys(record).map((key) => {
+        //     return {
+        //       type: table.columns.find((column) => column.name == key).type,
+        //       value: record[key],
+        //     };
+        //   });
+        // });
+        return await callback(sql, table, records);
         // return results;
       } catch (error) {
         return error;
