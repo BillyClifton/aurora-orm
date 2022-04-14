@@ -8,8 +8,8 @@ const DB = require("../index.js")({
   database: process.env.DB_NAME,
 });
 
-let expenses = DB.Model(require("./tables/expense.js"));
-let users = DB.Model(require("./tables/user.js"));
+let expenses = DB.model(require("./tables/expense.js"));
+let users = DB.model(require("./tables/user.js"));
 
 test.only("Get", async () => {
   let response = await expenses.get({ where: { merchant: "Test Merch" } });
@@ -34,7 +34,6 @@ test("Create Table", async () => {
 });
 
 test("Create Expense", async () => {
-  let expenses = DB.Model(require("./tables/expense.js"));
   let results = await expenses.create({
     merchant: "Test Merch",
     amount: 30.12,
@@ -42,20 +41,3 @@ test("Create Expense", async () => {
   expect(results.data).toBeDefined();
   expect(results.data[0].merchant).toBe("Test Merch");
 });
-// {
-//   data: [
-//     {
-//       uuid: expect.toBeDefined,
-//       user_uuid: null,
-//       date: null,
-//       amount: '30.12',
-//       merchant: 'Test Merch',
-//       type: null,
-//       description: null,
-//       status: 'draft',
-//       note: null,
-//       created_at: '2022-04-13 19:57:51.786972'
-//     }
-//   ],
-//   updated: 0
-// }

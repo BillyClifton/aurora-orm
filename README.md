@@ -21,6 +21,7 @@ Lightweight ORM for Aurora Data API
         default: "gen_random_uuid()",
         primary_key: true,
       },
+
       {
         name: "email",
         type: "text",
@@ -42,31 +43,41 @@ Lightweight ORM for Aurora Data API
         name: "created_at",
         type: "timestamptz",
         default: "CURRENT_TIMESTAMP",
-      },
-      {
-        name: "updated_at",
-        type: "timestamptz",
-        default: "CURRENT_TIMESTAMP",
-      },
+      }
     ],
   };
 
 
   //build model
-  let users = DB.Model(table_schema, config);
+  let users = DB.Model(table_schema);
 
-  //query
+  //create Table
+  await users.createTable();
+
+  //insert record
+  await users.create({
+    email: "DudeMan@email.com"
+    password: hashfunction("12345")
+  });
+
+  //get record
   let response = users.get({
     where: {
-      email: "Billy@email.com"
+      email: "DudeMan@email.com"
     }
   });
-//[
-//    {
-//      uuid: '8066a2d9-155e-4b5f-8d4b-51b194eba86d',
-//      email: "Billy@email.com",
-//      ...
-//    }
-//]
+
+  //update record
+  let response = await users.update({password: hashFunction("password")},{
+    where: {
+      email: "DudeMan@email.com"
+    }
+  })
+
+  //delete record
+  let response = await users.destroy({email: "DudeMan@email.com"});
+
+  //drop table
+  await users.dropTable();
 
 ```
