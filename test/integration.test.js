@@ -11,7 +11,7 @@ const DB = require("../index.js")({
 let expenses = DB.Model(require("./tables/expense.js"));
 let users = DB.Model(require("./tables/user.js"));
 
-test("Get", async () => {
+test.only("Get", async () => {
   let response = await expenses.get({ where: { merchant: "Test Merch" } });
   expect(response.data).toBeTruthy();
 });
@@ -33,7 +33,7 @@ test("Create Table", async () => {
   });
 });
 
-test.only("Create Expense", async () => {
+test("Create Expense", async () => {
   let expenses = DB.Model(require("./tables/expense.js"));
   let results = await expenses.create({
     merchant: "Test Merch",
