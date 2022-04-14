@@ -52,6 +52,7 @@ module.exports = function (table, callback) {
   }
 
   return {
+    table: table,
     get: async ({
       fields = ["*"],
       where = {},

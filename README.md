@@ -32,14 +32,6 @@ Lightweight ORM for Aurora Data API
         type: "text",
       },
       {
-        name: "first_name",
-        type: "text",
-      },
-      {
-        name: "last_name",
-        type: "text",
-      },
-      {
         name: "created_at",
         type: "timestamptz",
         default: "CURRENT_TIMESTAMP",
@@ -57,7 +49,7 @@ Lightweight ORM for Aurora Data API
   //insert record
   await users.create({
     email: "DudeMan@email.com"
-    password: hashfunction("12345")
+    password: "12345"
   });
 
   //get record
@@ -67,17 +59,18 @@ Lightweight ORM for Aurora Data API
     }
   });
 
+  //TODO
   //update record
-  let response = await users.update({password: hashFunction("password")},{
-    where: {
-      email: "DudeMan@email.com"
-    }
-  })
+  // let response = await users.update({password: "password"},{
+  //   where: {
+  //     email: "DudeMan@email.com"
+  //   }
+  // })
 
-  //delete record
-  let response = await users.destroy({email: "DudeMan@email.com"});
+  // //delete record
+  // let response = await users.destroy({email: "DudeMan@email.com"});
 
-  //drop table
-  await users.dropTable();
+  // //drop table
+  // await users.dropTable();
 
 ```
