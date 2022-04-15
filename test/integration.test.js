@@ -11,7 +11,7 @@ const DB = require("../index.js")({
 let expenses = DB.model(require("./tables/expense.js"));
 let users = DB.model(require("./tables/user.js"));
 
-test.only("Get", async () => {
+test("Get", async () => {
   let response = await expenses.get({ where: { merchant: "Test Merch" } });
   expect(response.data).toBeTruthy();
 });
@@ -37,6 +37,7 @@ test("Create Expense", async () => {
   let results = await expenses.create({
     merchant: "Test Merch",
     amount: 30.12,
+    date: "2022-01-01",
   });
   expect(results.data).toBeDefined();
   expect(results.data[0].merchant).toBe("Test Merch");

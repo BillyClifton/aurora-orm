@@ -2,27 +2,26 @@
 module.exports = function (config) {
   const AWS = require("aws-sdk");
   AWS.config.update({ region: process.env.AWS_REGION || "us-east-1" });
-  function buildParams(args) {
-    if (!Array.isArray(args)) {
-      args = [args];
+  function buildParams(params) {
+    if (!Array.isArray(params[0])) {
+      params = [params];
     }
-    return args.map((arg) => {
-      return Object.keys(arg).map((key) => {
-        let param = {
-          name: arg[key].name || key,
-          value: arg[key].value || arg[key],
-        };
-        if (param.value == null) {
-          param.isNull = true;
-          return param;
+    let results = params.map((entry) => {
+      return entry.map((param) => {
+        if (param.value === null) {
+          return {
+            name: param.name,
+            isNull: true,
+          };
         }
         //typeHint: JSON | UUID | TIMESTAMP | DATE | TIME | DECIMAL,
-        if (arg[key].type.startsWith("decimal")) {
+        if (param.type.startsWith("decimal")) {
           param.typeHint = "DECIMAL";
           param.value = { doubleValue: param.value };
+          delete param.type;
           return param;
         }
-        switch (arg[key].type) {
+        switch (param.type) {
           case "text":
             param.value = { stringValue: param.value };
             break;
@@ -59,11 +58,16 @@ module.exports = function (config) {
             param.value = { longValue: param.value };
             break;
         }
+        delete param.type;
         return param;
       });
     });
+    if (results.length == 1) {
+      return results.pop();
+    }
+    return results;
   }
-  function formatResponse(table, response) {
+  function formatResponse(response, table) {
     let records =
       response.records ||
       (response.updateResults &&
@@ -100,17 +104,17 @@ module.exports = function (config) {
           response = await data_service.executeStatement(request).promise();
           return response;
         }
-        let params = buildParams(args);
-        if ((params.length = 1)) {
-          request.parameters = params[0];
-          response = await data_service.executeStatement(request).promise();
-        } else {
+        let params = buildParams(args, table);
+        if (Array.isArray(params) && Array.isArray(params[0])) {
           request.parameterSets = params;
           response = await data_service
             .batchExecuteStatement(request)
             .promise();
+        } else {
+          request.parameters = params;
+          response = await data_service.executeStatement(request).promise();
         }
-        return formatResponse(table, response);
+        return formatResponse(response, table);
       } catch (error) {
         console.error(error);
         return error;

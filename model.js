@@ -2,48 +2,52 @@
 module.exports = function (table, callback) {
   function buildWhere(where) {
     let sql = "";
-    let params = {};
+    let params = [];
     let x = 1;
     if (Object.keys(where).length) {
       sql += ` WHERE ${Object.keys(where)
         .map((key) => {
           let field = key.replace(/^.*~/, "");
           if (Array.isArray(where[key]) && where[key].length == 1) {
-            where[key] = where[key][0];
+            where[key] = where[key].shift();
           }
           if (Array.isArray(where[key])) {
             return `${key} IN (:${where[key]
               .map((entry) => {
-                params[x.toString()] = {
+                params.push({
+                  name: (params.length + 1).toString(),
                   type: table.columns.find((column) => column.name == field)
                     .type,
                   value: entry,
-                };
+                });
                 return x++;
               })
               .join(",:")})`;
           } else {
-            params[x.toString()] = {
+            if (key.startsWith("like~")) {
+              where[key] = `%${where[key]}%`;
+            }
+            params.push({
+              name: (params.length + 1).toString(),
               type: table.columns.find((column) => column.name == field).type,
               value: where[key],
-            };
+            });
             if (key.startsWith("lt~")) {
-              return `${field} < :${x++}`;
+              return `${field} < :${params.length}`;
             }
             if (key.startsWith("gt~")) {
-              return `${field} > :${x++}`;
+              return `${field} > :${params.length}`;
             }
             if (key.startsWith("lte~")) {
-              return `${field} <= :${x++}`;
+              return `${field} <= :${params.length}`;
             }
             if (key.startsWith("gte~")) {
-              return `${field} >= :${x++}`;
+              return `${field} >= :${params.length}`;
             }
             if (key.startsWith("like~")) {
-              params[x.toString()].value = `%${params[x.toString()].value}%`;
-              return `${field} ILIKE :${x++}`;
+              return `${field} ILIKE :${params.length}`;
             }
-            return `${field} = :${x++}`;
+            return `${field} = :${params.length}`;
           }
         })
         .join(" AND ")}`;
@@ -112,7 +116,19 @@ module.exports = function (table, callback) {
         let sql = `INSERT INTO ${table.name} (${fields.join(
           ", "
         )}) VALUES (:${fields.join(", :")}) RETURNING *;`;
-        return await callback(sql, table, records);
+        if (!Array.isArray(records)) {
+          records = [records];
+        }
+        let params = records.map((record) => {
+          return Object.keys(record).map((field) => {
+            return {
+              name: field,
+              value: record[field],
+              type: table.columns.find((column) => column.name == field).type,
+            };
+          });
+        });
+        return await callback(sql, table, params);
       } catch (error) {
         return error;
       }

@@ -13,3 +13,47 @@ test("Query", async () => {
     records: [[{ booleanValue: true }]],
   });
 });
+
+test("Build Single parameters", async () => {
+  expect(
+    connection.buildParams([
+      { name: "1", type: "text", value: "Test Merch" },
+      { name: "2", type: "text", value: "Home Shop" },
+      { name: "3", type: "text", value: "personal" },
+      { name: "4", type: "text", value: "business" },
+    ])
+  ).toEqual([
+    { name: "1", value: { stringValue: "Test Merch" } },
+    { name: "2", value: { stringValue: "Home Shop" } },
+    { name: "3", value: { stringValue: "personal" } },
+    { name: "4", value: { stringValue: "business" } },
+  ]);
+});
+
+test("Build batch parameters", async () => {
+  expect(
+    connection.buildParams([
+      [
+        { name: "merchant", value: "Test Merch", type: "text" },
+        { name: "amount", value: 30.12, type: "decimal(12,2)" },
+        { name: "date", value: "2022-01-01", type: "date" },
+      ],
+      [
+        { name: "merchant", value: "Test Merch", type: "text" },
+        { name: "amount", value: 30.12, type: "decimal(12,2)" },
+        { name: "date", value: "2022-01-01", type: "date" },
+      ],
+    ])
+  ).toEqual([
+    [
+      { name: "merchant", value: { stringValue: "Test Merch" } },
+      { name: "amount", value: { doubleValue: 30.12 }, typeHint: "DECIMAL" },
+      { name: "date", value: { stringValue: "2022-01-01" }, typeHint: "DATE" },
+    ],
+    [
+      { name: "merchant", value: { stringValue: "Test Merch" } },
+      { name: "amount", value: { doubleValue: 30.12 }, typeHint: "DECIMAL" },
+      { name: "date", value: { stringValue: "2022-01-01" }, typeHint: "DATE" },
+    ],
+  ]);
+});

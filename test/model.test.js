@@ -1,6 +1,7 @@
 "use strict";
 require("dotenv").config();
 async function MockCallback(sql, table, params) {
+  // console.log(params);
   return Promise.resolve(sql);
 }
 const expenses = require("../model")(
