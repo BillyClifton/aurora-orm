@@ -11,17 +11,6 @@ const DB = require("../index.js")({
 let expenses = DB.model(require("./tables/expense.js"));
 let users = DB.model(require("./tables/user.js"));
 
-test("Get", async () => {
-  let response = await expenses.get({ where: { merchant: "Test Merch" } });
-  expect(response.data).toBeTruthy();
-});
-test("Get Batch", async () => {
-  let response = await expenses.get({
-    where: { merchant: ["Test Merch", "another"] },
-  });
-  expect(response.data).toBeTruthy();
-});
-
 test("Create Table", async () => {
   expect(users.createTable()).resolves.toEqual({
     generatedFields: [],
@@ -33,7 +22,7 @@ test("Create Table", async () => {
   });
 });
 
-test("Create Expense", async () => {
+test("Create Record", async () => {
   let results = await expenses.create({
     merchant: "Test Merch",
     amount: 30.12,
@@ -41,4 +30,38 @@ test("Create Expense", async () => {
   });
   expect(results.data).toBeDefined();
   expect(results.data[0].merchant).toBe("Test Merch");
+});
+
+test("Create Batch", async () => {
+  let results = await expenses.create([
+    {
+      merchant: "Test Merch",
+      amount: 30.12,
+      date: "2022-01-01",
+    },
+    {
+      merchant: "Test Merch",
+      amount: 30.12,
+      date: "2022-01-01",
+    },
+  ]);
+  expect(results.data).toBeDefined();
+  expect(results.data[0].merchant).toBe("Test Merch");
+});
+test("Get", async () => {
+  await expenses.create({
+    merchant: "Test Merch",
+    amount: 30.12,
+    date: "2022-01-01",
+  });
+  let response = await expenses.get({
+    where: { merchant: "Test Merch", date: "2022-01-01" },
+  });
+  expect(response.data).toBeTruthy();
+});
+test("Get Batch", async () => {
+  let response = await expenses.get({
+    where: { merchant: ["Test Merch", "another"] },
+  });
+  expect(response.data).toBeTruthy();
 });

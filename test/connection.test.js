@@ -14,7 +14,7 @@ test("Query", async () => {
   });
 });
 
-test("Build Single parameters", async () => {
+test("Build Single parameters", () => {
   expect(
     connection.buildParams([
       { name: "1", type: "text", value: "Test Merch" },
@@ -30,7 +30,7 @@ test("Build Single parameters", async () => {
   ]);
 });
 
-test("Build batch parameters", async () => {
+test("Build batch parameters", () => {
   expect(
     connection.buildParams([
       [
@@ -56,4 +56,45 @@ test("Build batch parameters", async () => {
       { name: "date", value: { stringValue: "2022-01-01" }, typeHint: "DATE" },
     ],
   ]);
+});
+test("Format Response", () => {
+  expect(
+    connection.formatResponse(
+      {
+        numberOfRecordsUpdated: 0,
+        records: [
+          [
+            { stringValue: "b7ad798e-2e64-4fa7-90c4-21d5b214d63e" },
+            { isNull: true },
+            { stringValue: "2022-01-01" },
+            { stringValue: "30.12" },
+            { stringValue: "Test Merch" },
+            { isNull: true },
+            { isNull: true },
+            { stringValue: "draft" },
+            { isNull: true },
+            { stringValue: "2022-04-15 13:54:08.925499" },
+            { stringValue: "2022-04-15 13:54:08.925499" },
+          ],
+        ],
+      },
+      require("./tables/expense.js")
+    )
+  ).toEqual({
+    data: [
+      {
+        uuid: "b7ad798e-2e64-4fa7-90c4-21d5b214d63e",
+        user_uuid: null,
+        date: "2022-01-01",
+        amount: "30.12",
+        merchant: "Test Merch",
+        type: null,
+        description: null,
+        status: "draft",
+        note: null,
+        created_at: "2022-04-15 13:54:08.925499",
+      },
+    ],
+    updated: 0,
+  });
 });
