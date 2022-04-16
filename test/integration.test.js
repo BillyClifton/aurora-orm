@@ -28,8 +28,8 @@ test("Create Record", async () => {
     amount: 30.12,
     date: "2022-01-01",
   });
-  expect(results.data).toBeDefined();
-  expect(results.data[0].merchant).toBe("Test Merch");
+  expect(results).toBeDefined();
+  expect(results.merchant).toBe("Test Merch");
 });
 
 test("Create Batch", async () => {
@@ -40,13 +40,14 @@ test("Create Batch", async () => {
       date: "2022-01-01",
     },
     {
-      merchant: "Test Merch",
-      amount: 30.12,
+      merchant: "Bobs Shop",
+      amount: 130.1,
       date: "2022-01-01",
     },
   ]);
-  expect(results.data).toBeDefined();
-  expect(results.data[0].merchant).toBe("Test Merch");
+  expect(results).toBeDefined();
+  expect(results[0].merchant).toEqual("Test Merch");
+  expect(results[1].merchant).toEqual("Bobs Shop");
 });
 test("Get", async () => {
   await expenses.create({
@@ -57,11 +58,11 @@ test("Get", async () => {
   let response = await expenses.get({
     where: { merchant: "Test Merch", date: "2022-01-01" },
   });
-  expect(response.data).toBeTruthy();
+  expect(response).toBeTruthy();
 });
-test("Get Batch", async () => {
+test("Get by array", async () => {
   let response = await expenses.get({
     where: { merchant: ["Test Merch", "another"] },
   });
-  expect(response.data).toBeTruthy();
+  expect(response).toBeTruthy();
 });

@@ -1,8 +1,10 @@
 "use strict";
 require("dotenv").config();
 async function MockCallback(sql, table, params) {
-  // console.log(params);
-  return Promise.resolve(sql);
+  if (!table || !params) {
+    return Promise.resolve(sql);
+  }
+  return Promise.resolve({ data: sql });
 }
 const expenses = require("../model")(
   require("./tables/expense.js"),
@@ -78,7 +80,6 @@ test("Get Total", () => {
 });
 
 test("Create", () => {
-  // console.log(expenses.create({ merchant: "Test Merch", amount: 30.12 }));
   expect(
     expenses.create({ merchant: "Test Merch", amount: 30.12 })
   ).resolves.toEqual(

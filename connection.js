@@ -101,8 +101,7 @@ module.exports = function (config) {
           ...config,
         };
         if (!table || !args) {
-          response = await data_service.executeStatement(request).promise();
-          return response;
+          return await data_service.executeStatement(request).promise();
         }
         let params = buildParams(args, table);
         if (Array.isArray(params) && Array.isArray(params[0])) {

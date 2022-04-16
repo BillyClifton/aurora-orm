@@ -87,7 +87,7 @@ module.exports = function (table, callback) {
         sql += where_sql;
         sql += ` OFFSET ${offset} LIMIT ${limit}`;
         let results = await callback(sql, table, params);
-        return results;
+        return results.data;
       } catch (error) {
         return error;
       }
@@ -105,13 +105,14 @@ module.exports = function (table, callback) {
         let [where_sql, params] = buildWhere(where);
         sql += where_sql;
         let results = await callback(sql, table, params);
-        return results;
+        return results.data;
       } catch (error) {
         return error;
       }
     },
     create: async (records) => {
       try {
+        let batched = Array.isArray(records);
         let fields = Object.keys(Array.isArray(records) ? records[0] : records);
         let sql = `INSERT INTO ${table.name} (${fields.join(
           ", "
@@ -128,7 +129,10 @@ module.exports = function (table, callback) {
             };
           });
         });
-        return await callback(sql, table, params);
+        let results = await callback(sql, table, params);
+        return !batched && Array.isArray(results.data)
+          ? results.data.pop()
+          : results.data;
       } catch (error) {
         return error;
       }
@@ -148,7 +152,7 @@ module.exports = function (table, callback) {
           data[`where_${key}`] = value;
         }
         let response = await callback(sql, table, data);
-        return response;
+        return response.data;
       } catch (error) {
         return error;
       }
@@ -160,8 +164,7 @@ module.exports = function (table, callback) {
           .map((key) => `${key} = :${key}`)
           .join(" AND ")} RETURNING *`;
         let response = await callback(sql, table, where);
-        console.Console;
-        return response;
+        return response.data;
       } catch (error) {
         return error;
       }
@@ -179,7 +182,8 @@ module.exports = function (table, callback) {
           return statement;
         });
         sql += ` (${columns.join(", ")});`;
-        return await callback(sql, table);
+        let response = await callback(sql);
+        return response;
       } catch (error) {
         return error;
       }
@@ -195,7 +199,7 @@ module.exports = function (table, callback) {
           ? ` ${table.name}_${index.name}_index`
           : ` ${table.name}_${index.fields.join("_")}_index`;
         sql += ` ON ${table.name} (${index.fields.join(", ")})`;
-        return callback(sql, table);
+        return callback(sql);
       });
       return await Promise.all(statements);
     },
@@ -213,35 +217,32 @@ module.exports = function (table, callback) {
           statement += column.reference.on_delete
             ? ` ON DELETE ${column.reference.on_delete}`
             : "";
-          return callback(statement, table);
+          return callback(statement);
         });
       return await Promise.all(statements);
     },
     createTriggers: async () => {
-      let statments = table.triggers.map(async (trigger) => {
+      let statements = table.triggers.map(async (trigger) => {
         let sql = `CREATE TRIGGER ${trigger.name} BEFORE UPDATE ON ${trigger.resource} FOR EACH ROW EXECUTE PROCEDURE ${trigger.procedure}`;
-        return callback(sql, table);
+        return callback(sql);
       });
-      return await Promise.all(statments);
+      return await Promise.all(statements);
     },
     dropTable: async () => {
       let sql = `DROP TABLE IF EXISTS ${table.name} CASCADE`;
-      return sql;
+      return callback(sql);
     },
     collumns: async () => {
       let sql = `SELECT * FROM information_schema.columns WHERE table_name = '${table.name}'`;
-      return sql;
+      return callback(sql);
     },
     indexes: async () => {
       let sql = `SELECT * FROM pg_indexes WHERE schemaname='public' and tablename = '${table.name}'`;
-      return sql;
+      return callback(sql);
     },
     tables: async () => {
       let sql = `SELECT * FROM information_schema.tables where table_schema='public'`;
-      return sql;
-    },
-    test: async () => {
-      return sql;
+      return callback(sql);
     },
     provision: async () => {
       return await Promise.all([
