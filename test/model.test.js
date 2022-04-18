@@ -91,13 +91,13 @@ test("Update", () => {
   expect(
     users.update({ first_name: "john" }, { where: { email: "test@email.com" } })
   ).resolves.toEqual(
-    "UPDATE users SET first_name = :first_name WHERE email = :where_email RETURNING *"
+    "UPDATE users SET first_name = :first_name WHERE email = :1 RETURNING *"
   );
 });
 
 test("Delete", () => {
   expect(users.destroy({ email: "test@email.com" })).resolves.toEqual(
-    "DELETE FROM users WHERE email = :email RETURNING *"
+    "DELETE FROM users WHERE email = :1 RETURNING *"
   );
 });
 

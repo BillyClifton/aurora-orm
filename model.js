@@ -137,33 +137,26 @@ module.exports = function (table, callback) {
         return error;
       }
     },
-    update: async (data, params) => {
+    update: async (data, args) => {
       try {
-        if (!params.where) {
+        if (!args.where) {
           throw new Error("No scope defined for for update.");
         }
-        let where = params.where;
+        let [where, params] = buildWhere(args.where);
         let sql = `UPDATE ${table.name} SET ${Object.keys(data)
           .map((key) => `${key} = :${key}`)
-          .join(", ")} WHERE ${Object.keys(where)
-          .map((key) => `${key} = :where_${key}`)
-          .join(" AND ")} RETURNING *`;
-        for (const [key, value] of Object.entries(where)) {
-          data[`where_${key}`] = value;
-        }
-        let response = await callback(sql, table, data);
+          .join(", ")}${where} RETURNING *`;
+        let response = await callback(sql, table, params);
         return response.data;
       } catch (error) {
         return error;
       }
     },
-    destroy: async (where) => {
+    destroy: async (args) => {
       try {
-        let sql = `DELETE FROM ${table.name}`;
-        sql += ` WHERE ${Object.keys(where)
-          .map((key) => `${key} = :${key}`)
-          .join(" AND ")} RETURNING *`;
-        let response = await callback(sql, table, where);
+        let [where, params] = buildWhere(args);
+        let sql = `DELETE FROM ${table.name}${where} RETURNING *`;
+        let response = await callback(sql, table, params);
         return response.data;
       } catch (error) {
         return error;
